@@ -24,7 +24,7 @@ const vonageConfig = {
 //const privateKey = require('fs').readFileSync('private.key');
 
 // Incoming webhook endpoint
-const vonageClient = new vonage.Client(vonageConfig);
+// const vonageClient = new vonage.Client(vonageConfig);
 app.post('/webhooks/inbound-message', (req, res) => {
   const message = req.body;
   console.log(message);
@@ -36,16 +36,33 @@ app.post('/webhooks/inbound-message', (req, res) => {
   const to = { type: 'whatsapp', number: message.from.number };
   const content = { type: 'text', text };
 
-  vonageClient.channel.send(
-    { from, to, content },
-    (err, data) => {
-      if (err) {
-        console.error(err);
-      } else {
-        console.log(data);
-      }
-    }
-  );
+  var req = unirest('POST', 'https://messages-sandbox.nexmo.com/v1/messages')
+  .headers({
+    'Authorization': 'Basic ' + Buffer.from(apiKey + ':' + apiSecret),
+    'Content-Type': 'application/json'
+  })
+  .send(JSON.stringify({
+    "from": "14157386102",
+    "to": phoneNumber,
+    "message_type": "text",
+    "text": text,
+    "channel": "whatsapp"
+  }))
+  .end(function (res) { 
+    if (res.error) throw new Error(res.error); 
+    console.log(res.raw_body);
+  });
+
+  // vonageClient.channel.send(
+  //   { from, to, content },
+  //   (err, data) => {
+  //     if (err) {
+  //       console.error(err);
+  //     } else {
+  //       console.log(data);
+  //     }
+  //   }
+  // );
 
     res.status(204).send();
 });
